@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz Results - Quiz Application{% endblock %}
+
+{% block extra_css %}
+<style>
+.result-card {
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+.grade-badge {
+    font-size: 2rem;
+    padding: 15px 25px;
+    border-radius: 50px;
+}
+.question-result {
+    border-radius: 10px;
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+}
+.correct-answer {
+    border-left-color: #28a745;
+    background-color: #f8fff8;
+}
+.incorrect-answer {
+    border-left-color: #dc3545;
+    background-color: #fff8f8;
+}
+.answer-choice {
+    padding: 8px 12px;
+    border-radius: 5px;
+    margin: 2px 0;
+}
+.user-choice {
+    background-color: #e3f2fd;
+    border: 1px solid #2196f3;
+}
+.correct-choice {
+    background-color: #e8f5e8;
+    border: 1px solid #4caf50;
+}
+.incorrect-choice {
+    background-color: #ffebee;
+    border: 1px solid #f44336;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Results Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card result-card {% if passed %}bg-success{% else %}bg-danger{% endif %} text-white">
+                <div class="card-body text-center py-4">
+                    <h2><i class="fas fa-{% if passed %}check-circle{% else %}times-circle{% endif %}"></i> Quiz Completed!</h2>
+                    <p class="mb-0">Here are your results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Score Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-4 mb-3">
+            <div class="card result-card h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title"><i class="fas fa-chart-bar"></i> Your Score</h5>
+                    <div class="score-circle mx-auto mb-3 {% if passed %}bg-success{% else %}bg-danger{% endif %} text-white">
+                        {{ user_score.score }}/{{ user_score.total_questions }}
+                    </div>
+                    <p class="text-muted">{{ percentage }}% Correct</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-3">
+            <div class="card result-card h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title"><i class="fas fa-medal"></i> Grade</h5>
+                    <span class="grade-badge badge {% if grade == 'A' %}bg-success{% elif grade == 'B' %}bg-primary{% elif grade == 'C' %}bg-warning{% elif grade == 'D' %}bg-orange text-white{% else %}bg-danger{% endif %}">
+                        {{ grade }}
+                    </span>
+                    <p class="text-muted mt-3">
+                        {% if passed %}
+                            <i class="fas fa-check-circle text-success"></i> Passed
+                        {% else %}
+                            <i class="fas fa-times-circle text-danger"></i> Failed
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-3">
+            <div class="card result-card h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title"><i class="fas fa-clock"></i> Time Taken</h5>
+                    <h3 class="text-primary">
+                        {% if user_score.time_taken %}
+                            {% with total_seconds=user_score.time_taken.total_seconds|floatformat:0 %}
+                                {{ total_seconds|floatformat:0|add:"0"|time:"i:s" }}
+                            {% endwith %}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </h3>
+                    <p class="text-muted">Minutes:Seconds</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card result-card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Performance Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-success">{{ user_score.score }}</h4>
+                                <small class="text-muted">Correct</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-danger">{{ user_score.total_questions|add:user_score.score|add:"-"|add:user_score.score }}</h4>
+                                <small class="text-muted">Incorrect</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-primary">{{ percentage }}%</h4>
+                                <small class="text-muted">Accuracy</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-info">{{ user_score.total_questions }}</h4>
+                                <small class="text-muted">Total Questions</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Results -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card result-card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-alt"></i> Detailed Question Review
+                        <span class="float-end">
+                            <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#detailsCollapse">
+                                <i class="fas fa-eye"></i> Show/Hide Details
+                            </button>
+                        </span>
+                    </h5>
+                </div>
+                <div class="collapse show" id="detailsCollapse">
+                    <div class="card-body">
+                        {% for result in detailed_results %}
+                        <div class="question-result mb-3 p-3 {% if result.is_correct %}correct-answer{% else %}incorrect-answer{% endif %}">
+                            <div class="row">
+                                <div class="col-md-1">
+                                    <div class="text-center">
+                                        <div class="badge {% if result.is_correct %}badge-success{% else %}badge-danger{% endif %} rounded-pill">
+                                            Q{{ forloop.counter }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-11">
+                                    <h6 class="mb-3">{{ result.question }}</h6>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>Your Answer:</strong>
+                                            <div class="answer-choice {% if result.is_correct %}correct-choice{% else %}user-choice{% endif %}">
+                                                <i class="fas fa-{% if result.is_correct %}check{% else %}times{% endif %}"></i>
+                                                {{ result.user_answer }}) {{ result.user_text }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Correct Answer:</strong>
+                                            <div class="answer-choice correct-choice">
+                                                <i class="fas fa-check"></i>
+                                                {{ result.correct_answer }}) {{ result.correct_text }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if not result.is_correct %}
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            This question was answered incorrectly.
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card result-card">
+                <div class="card-body text-center">
+                    <h5><i class="fas fa-rocket"></i> What's Next?</h5>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{% url 'quiz_setup' %}" class="btn btn-primary btn-lg me-md-2">
+                            <i class="fas fa-redo"></i> Take Another Quiz
+                        </a>
+                        <a href="{% url 'user_history' %}" class="btn btn-outline-info btn-lg me-md-2">
+                            <i class="fas fa-history"></i> View History
+                        </a>
+                        <a href="{% url 'leaderboard' %}" class="btn btn-outline-warning btn-lg me-md-2">
+                            <i class="fas fa-trophy"></i> Leaderboard
+                        </a>
+                        <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Celebration Animation for High Scores -->
+{% if percentage >= 90 %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add celebration animation for excellent scores
+    setTimeout(() => {
+        if (typeof confetti !== 'undefined') {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+    }, 500);
+});
+</script>
+{% endif %}
+{% endblock %}'''
+
+# Create additional templates for completeness
+about_template = '''{% extends 'base.html' %}
+
+{% block title %}About - Quiz Application{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white text-center">
+                    <h2><i class="fas fa-info-circle"></i> About Quiz Application</h2>
+                </div>
+                <div class="card-body">
+                    <h4>Welcome to our Quiz Platform!</h4>
+                    
+                    <p>This is a comprehensive Django-based quiz application designed to provide an engaging and interactive learning experience. Whether you're a student looking to test your knowledge or an educator wanting to assess understanding, our platform offers a robust solution for all your quiz needs.</p>
+                    
+                    <h5><i class="fas fa-star"></i> Key Features:</h5>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>Multiple Choice Questions:</strong> Well-crafted questions with four options each</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>User Authentication:</strong> Secure registration and login system</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>Customizable Quizzes:</strong> Choose difficulty level and number of questions</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>Detailed Results:</strong> Comprehensive feedback with correct answers</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>Progress Tracking:</strong> Monitor your performance over time</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>Leaderboard:</strong> Compare your scores with other users</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>Admin Panel:</strong> Easy question management for administrators</li>
+                    </ul>
+                    
+                    <h5><i class="fas fa-cogs"></i> Technology Stack:</h5>
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <i class="fab fa-python fa-3x text-primary mb-2"></i>
+                            <h6>Django Framework</h6>
+                            <p>Python-based web framework</p>
+                        </div>
+                        <div class="col-md-4">
+                            <i class="fas fa-database fa-3x text-success mb-2"></i>
+                            <h6>SQLite Database</h6>
+                            <p>Lightweight development database</p>
+                        </div>
+                        <div class="col-md-4">
+                            <i class="fab fa-bootstrap fa-3x text-warning mb-2"></i>
+                            <h6>Bootstrap 5</h6>
+                            <p>Responsive UI framework</p>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-primary">
+                        <h6><i class="fas fa-graduation-cap"></i> How to Get Started:</h6>
+                        <ol>
+                            <li>Register for a free account</li>
+                            <li>Configure your quiz settings</li>
+                            <li>Take your first quiz</li>
+                            <li>Review your results and track progress</li>
+                            <li>Challenge yourself with more quizzes!</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="text-center">
+                        {% if not user.is_authenticated %}
+                        <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-user-plus"></i> Get Started Now
+                        </a>
+                        {% else %}
+                        <a href="{% url 'quiz_setup' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-play"></i> Take a Quiz
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

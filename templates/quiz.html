@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz - Quiz Application{% endblock %}
+
+{% block extra_css %}
+<style>
+.question-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid #007bff;
+}
+.question-number {
+    background: #007bff;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+.choice-option {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 2px solid #e9ecef;
+}
+.choice-option:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+}
+.choice-option input[type="radio"]:checked + label {
+    background-color: #e3f2fd;
+    border-color: #007bff;
+    font-weight: 500;
+}
+.progress-quiz {
+    height: 10px;
+    border-radius: 5px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Quiz Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h2><i class="fas fa-question-circle"></i> Quiz in Progress</h2>
+                    <p class="mb-0">Answer all questions and submit when complete</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span><strong>Progress:</strong></span>
+                        <span><strong>Questions: {{ question_count }}</strong></span>
+                    </div>
+                    <div class="progress progress-quiz">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 0%" id="progressBar">
+                            <span class="sr-only">0% Complete</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <small class="text-muted">
+                            Difficulty: {{ quiz_settings.difficulty|title }}
+                            {% if quiz_settings.random_order %} | Random Order{% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" id="quizForm">
+        {% csrf_token %}
+
+        <!-- Questions -->
+        {% for field in form %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card question-card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="question-number me-3">
+                                {{ forloop.counter }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="card-title">{{ field.label }}</h5>
+                            </div>
+                        </div>
+
+                        <div class="ms-5">
+                            {% for choice in field %}
+                            <div class="choice-option">
+                                <div class="form-check">
+                                    {{ choice.tag }}
+                                    <label class="form-check-label w-100" for="{{ choice.choice_value }}">
+                                        <strong>{{ choice.choice_label|slice:":1" }})</strong> {{ choice.choice_label|slice:"1:" }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                            {% if field.errors %}
+                            <div class="text-danger mt-2">
+                                <small><i class="fas fa-exclamation-triangle"></i> {{ field.errors.0 }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Submit Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-body text-center">
+                        <h5><i class="fas fa-check-circle"></i> Ready to Submit?</h5>
+                        <p class="text-muted">Make sure you've answered all questions before submitting.</p>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <button type="button" class="btn btn-outline-secondary btn-lg me-md-2" onclick="reviewAnswers()">
+                                <i class="fas fa-eye"></i> Review Answers
+                            </button>
+                            <button type="submit" class="btn btn-warning btn-lg" id="submitBtn">
+                                <i class="fas fa-paper-plane"></i> Submit Quiz
+                            </button>
+                        </div>
+
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> Time started: <span id="startTime"></span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-question-circle"></i> Confirm Submission</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to submit your quiz?</p>
+                <div id="unansweredWarning" class="alert alert-warning" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> Some questions are not answered!
+                </div>
+                <p><small class="text-muted">You won't be able to change your answers after submission.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="submitQuiz()">
+                    <i class="fas fa-paper-plane"></i> Submit Quiz
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Display start time
+    const now = new Date();
+    document.getElementById('startTime').textContent = now.toLocaleTimeString();
+
+    // Update progress bar based on answered questions
+    updateProgress();
+
+    // Add event listeners to all radio buttons
+    const radioButtons = document.querySelectorAll('input[type="radio"]');
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', updateProgress);
+    });
+
+    // Handle form submission
+    document.getElementById('submitBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        showConfirmModal();
+    });
+});
+
+function updateProgress() {
+    const totalQuestions = {{ question_count }};
+    const answeredQuestions = getAnsweredQuestions();
+    const progressPercent = (answeredQuestions / totalQuestions) * 100;
+
+    const progressBar = document.getElementById('progressBar');
+    progressBar.style.width = progressPercent + '%';
+    progressBar.textContent = Math.round(progressPercent) + '% Complete';
+
+    // Update button state
+    const submitBtn = document.getElementById('submitBtn');
+    if (answeredQuestions === totalQuestions) {
+        submitBtn.classList.remove('btn-warning');
+        submitBtn.classList.add('btn-success');
+        submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Submit Quiz';
+    } else {
+        submitBtn.classList.remove('btn-success');
+        submitBtn.classList.add('btn-warning');
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Quiz';
+    }
+}
+
+function getAnsweredQuestions() {
+    const questionNames = new Set();
+    const checkedRadios = document.querySelectorAll('input[type="radio"]:checked');
+
+    checkedRadios.forEach(radio => {
+        questionNames.add(radio.name);
+    });
+
+    return questionNames.size;
+}
+
+function reviewAnswers() {
+    const totalQuestions = {{ question_count }};
+    const answeredQuestions = getAnsweredQuestions();
+
+    if (answeredQuestions < totalQuestions) {
+        alert(`You have answered ${answeredQuestions} out of ${totalQuestions} questions.`);
+
+        // Highlight unanswered questions
+        highlightUnanswered();
+    } else {
+        alert('Great! You have answered all questions.');
+    }
+}
+
+function highlightUnanswered() {
+    // Remove previous highlights
+    document.querySelectorAll('.question-card').forEach(card => {
+        card.classList.remove('border-danger');
+    });
+
+    // Find and highlight unanswered questions
+    const questionNames = new Set();
+    const checkedRadios = document.querySelectorAll('input[type="radio"]:checked');
+
+    checkedRadios.forEach(radio => {
+        questionNames.add(radio.name);
+    });
+
+    const allQuestionNames = new Set();
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        allQuestionNames.add(radio.name);
+    });
+
+    allQuestionNames.forEach(name => {
+        if (!questionNames.has(name)) {
+            const firstRadio = document.querySelector(`input[name="${name}"]`);
+            const questionCard = firstRadio.closest('.question-card');
+            questionCard.classList.add('border-danger');
+        }
+    });
+}
+
+function showConfirmModal() {
+    const totalQuestions = {{ question_count }};
+    const answeredQuestions = getAnsweredQuestions();
+
+    if (answeredQuestions < totalQuestions) {
+        document.getElementById('unansweredWarning').style.display = 'block';
+    } else {
+        document.getElementById('unansweredWarning').style.display = 'none';
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    modal.show();
+}
+
+function submitQuiz() {
+    document.getElementById('quizForm').submit();
+}
+</script>
+{% endblock %}

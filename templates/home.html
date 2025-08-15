@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Quiz Application{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Hero Section -->
+    <div class="hero-section text-center py-5 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 text-primary mb-3">
+                    <i class="fas fa-graduation-cap"></i> Welcome to Quiz Application
+                </h1>
+                <p class="lead text-muted mb-4">
+                    Challenge yourself with our comprehensive quiz system. Test your knowledge, track your progress, and compete with others!
+                </p>
+
+                {% if user.is_authenticated %}
+                <div class="d-grid gap-2 d-md-block">
+                    <a href="{% url 'quiz_setup' %}" class="btn btn-primary btn-lg me-md-2">
+                        <i class="fas fa-play"></i> Start Quiz
+                    </a>
+                    <a href="{% url 'user_history' %}" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-chart-line"></i> View Results
+                    </a>
+                </div>
+                {% else %}
+                <div class="d-grid gap-2 d-md-block">
+                    <a href="{% url 'register' %}" class="btn btn-primary btn-lg me-md-2">
+                        <i class="fas fa-user-plus"></i> Get Started
+                    </a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Section -->
+    {% if user.is_authenticated %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="text-center mb-4">Your Statistics</h2>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-question-circle fa-2x text-primary mb-3"></i>
+                    <h5 class="card-title">Total Questions</h5>
+                    <h3 class="text-primary">{{ total_questions }}</h3>
+                    <p class="card-text text-muted">Available in database</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-clipboard-list fa-2x text-success mb-3"></i>
+                    <h5 class="card-title">Quiz Attempts</h5>
+                    <h3 class="text-success">{{ user_attempts|default:0 }}</h3>
+                    <p class="card-text text-muted">Total attempts</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-trophy fa-2x text-warning mb-3"></i>
+                    <h5 class="card-title">Best Score</h5>
+                    <h3 class="text-warning">
+                        {% if best_score %}{{ best_score.percentage|floatformat:1 }}%{% else %}N/A{% endif %}
+                    </h3>
+                    <p class="card-text text-muted">Personal best</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-2x text-info mb-3"></i>
+                    <h5 class="card-title">Average Score</h5>
+                    <h3 class="text-info">
+                        {% if average_score %}{{ average_score|floatformat:1 }}%{% else %}N/A{% endif %}
+                    </h3>
+                    <p class="card-text text-muted">Overall average</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Scores -->
+    {% if recent_scores %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3>Recent Quiz Results</h3>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Score</th>
+                            <th>Percentage</th>
+                            <th>Grade</th>
+                            <th>Time Taken</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for score in recent_scores %}
+                        <tr>
+                            <td>{{ score.completed_at|date:"M d, Y H:i" }}</td>
+                            <td>{{ score.score }}/{{ score.total_questions }}</td>
+                            <td>
+                                <span class="badge {% if score.percentage >= 80 %}bg-success{% elif score.percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ score.percentage|floatformat:1 }}%
+                                </span>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ score.get_grade }}</span></td>
+                            <td>
+                                {% if score.time_taken %}
+                                    {% with total_seconds=score.time_taken.total_seconds|floatformat:0 %}
+                                        {{ total_seconds|floatformat:0|add:"0"|time:"i:s" }}
+                                    {% endwith %}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-center">
+                <a href="{% url 'user_history' %}" class="btn btn-outline-primary">
+                    View All Results <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+
+    <!-- Features for non-authenticated users -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="text-center mb-4">Features</h2>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-question-circle fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Multiple Choice Questions</h5>
+                    <p class="card-text">Answer carefully crafted multiple-choice questions covering various topics.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-bar fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">Track Progress</h5>
+                    <p class="card-text">Monitor your performance with detailed statistics and progress tracking.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-trophy fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title">Compete & Compare</h5>
+                    <p class="card-text">Compare your scores with others on the leaderboard and aim for the top!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Call to Action -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    {% if user.is_authenticated %}
+                    <h3>Ready for Another Challenge?</h3>
+                    <p>Test your knowledge with a new quiz and improve your score!</p>
+                    <a href="{% url 'quiz_setup' %}" class="btn btn-light btn-lg">
+                        <i class="fas fa-play"></i> Take Quiz Now
+                    </a>
+                    {% else %}
+                    <h3>Join Our Quiz Community!</h3>
+                    <p>Register now to start taking quizzes, track your progress, and compete with others.</p>
+                    <a href="{% url 'register' %}" class="btn btn-light btn-lg">
+                        <i class="fas fa-user-plus"></i> Register Now
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
