@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}About - Quiz Application{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white text-center">
+                    <h2><i class="fas fa-info-circle"></i> About Quiz Application</h2>
+                </div>
+                <div class="card-body">
+                    <h4>Welcome to our Quiz Platform!</h4>
+                    <p>This is a comprehensive Django-based quiz application designed to provide an engaging and interactive learning experience. Whether you're a student looking to test your knowledge or an educator wanting to assess understanding, our platform offers a robust solution for all your quiz needs.</p>
+                    <h5><i class="fas fa-star"></i> Key Features:</h5>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>Multiple Choice Questions:</strong> Well-crafted questions with four options each</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>User Authentication:</strong> Secure registration and login system</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>Customizable Quizzes:</strong> Choose difficulty level and number of questions</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>Detailed Results:</strong> Comprehensive feedback with correct answers</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>Progress Tracking:</strong> Monitor your performance over time</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>Leaderboard:</strong> Compare your scores with other users</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> <strong>Admin Panel:</strong> Easy question management for administrators</li>
+                    </ul>
+                    <h5><i class="fas fa-cogs"></i> Technology Stack:</h5>
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <i class="fab fa-python fa-3x text-primary mb-2"></i>
+                            <h6>Django Framework</h6>
+                            <p>Python-based web framework</p>
+                        </div>
+                        <div class="col-md-4">
+                            <i class="fas fa-database fa-3x text-success mb-2"></i>
+                            <h6>SQLite Database</h6>
+                            <p>Lightweight development database</p>
+                        </div>
+                        <div class="col-md-4">
+                            <i class="fab fa-bootstrap fa-3x text-warning mb-2"></i>
+                            <h6>Bootstrap 5</h6>
+                            <p>Responsive UI framework</p>
+                        </div>
+                    </div>
+                    <div class="alert alert-primary mt-4">
+                        <h6><i class="fas fa-graduation-cap"></i> How to Get Started:</h6>
+                        <ol>
+                            <li>Register for a free account</li>
+                            <li>Configure your quiz settings</li>
+                            <li>Take your first quiz</li>
+                            <li>Review your results and track progress</li>
+                            <li>Challenge yourself with more quizzes!</li>
+                        </ol>
+                    </div>
+                    <div class="text-center">
+                        {% if not user.is_authenticated %}
+                        <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-user-plus"></i> Get Started Now
+                        </a>
+                        {% else %}
+                        <a href="{% url 'quiz_setup' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-play"></i> Take a Quiz
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

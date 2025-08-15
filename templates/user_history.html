@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}My Quiz History - Quiz Application{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3><i class="fas fa-history"></i> My Quiz History</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-4">
+                        <div class="col-md-2 mb-3">
+                            <div class="stats-card">
+                                <div class="stats-number">{{ total_attempts }}</div>
+                                <div>Attempts</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="stats-card">
+                                <div class="stats-number">
+                                    {% if best_score %}
+                                        {{ best_score.percentage|floatformat:1 }}%
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </div>
+                                <div>Best Score</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="stats-card">
+                                <div class="stats-number">{{ average_score|floatformat:1 }}%</div>
+                                <div>Average</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="stats-card">
+                                <div class="stats-number">{{ total_correct_answers }}</div>
+                                <div>Correct</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="stats-card">
+                                <div class="stats-number">{{ total_questions_answered }}</div>
+                                <div>Questions</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="stats-card">
+                                <div class="stats-number">{{ overall_accuracy|floatformat:1 }}%</div>
+                                <div>Accuracy</div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    {% if user_scores %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date</th>
+                                    <th>Score</th>
+                                    <th>Percentage</th>
+                                    <th>Grade</th>
+                                    <th>Time Taken</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for score in user_scores %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ score.completed_at|date:"M d, Y H:i" }}</td>
+                                    <td>{{ score.score }}/{{ score.total_questions }}</td>
+                                    <td>
+                                        <span class="badge {% if score.percentage >= 80 %}bg-success{% elif score.percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ score.percentage|floatformat:1 }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ score.get_grade }}</span>
+                                    </td>
+                                    <td>
+                                        {% if score.time_taken %}
+                                            {% with total_seconds=score.time_taken.total_seconds|floatformat:0 %}
+                                                {{ total_seconds|floatformat:0|add:"0"|time:"i:s" }}
+                                            {% endwith %}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                        <p class="text-center text-muted">You haven't attempted any quizzes yet.</p>
+                    {% endif %}
+                    <div class="text-center mt-4">
+                        <a href="{% url 'quiz_setup' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-play"></i> Take Another Quiz
+                        </a>
+                        <a href="{% url 'leaderboard' %}" class="btn btn-outline-warning btn-lg">
+                            <i class="fas fa-trophy"></i> View Leaderboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
