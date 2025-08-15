@@ -56,3 +56,10 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
+### 6. Run Development Server
+bash
+python manage.py runserver
+### 7. Access the Application
+Main Application: http://127.0.0.1:8000/
+
+Admin Panel: http://127.0.0.1:8000/admin/
